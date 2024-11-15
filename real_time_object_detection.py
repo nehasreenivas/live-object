@@ -45,6 +45,9 @@ if image_file is not None:
     if frame is None:
         st.write("[ERROR] Failed to decode the image")
     else:
+        # Debugging: Print out the shape of the frame
+        st.write(f"Frame shape: {frame.shape}")
+        
         # Resize the frame (optional, depending on the size)
         frame = cv2.resize(frame, (400, 400))
 
@@ -52,8 +55,18 @@ if image_file is not None:
         if frame.shape[0] == 0 or frame.shape[1] == 0:
             st.write("[ERROR] Frame has invalid dimensions.")
         else:
+            # Check the channels (should be 3 channels for color image)
+            st.write(f"Frame channels: {frame.shape[2]}")
+
+            # Ensure the frame is in the correct color format (BGR)
+            frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+
             # Run the object detection (MobileNetSSD)
-            blob = cv2.dnn.blobFromImage(frame, 0.007843, (400, 400), 127.5, 127.5, 127.5, 127.5)
+            try:
+                blob = cv2.dnn.blobFromImage(frame_bgr, 0.007843, (400, 400), 127.5, 127.5, 127.5, 127.5)
+            except cv2.error as e:
+                st.write(f"[ERROR] OpenCV DNN blob error: {str(e)}")
+
             net.setInput(blob)
             detections = net.forward()
 
