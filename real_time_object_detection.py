@@ -30,7 +30,13 @@ def speak(text):
         audio_stream = io.BytesIO()
         tts.save(audio_stream)
         audio_stream.seek(0)  # Rewind the stream to the beginning
-        return audio_stream
+        
+        # Ensure that audio_stream is not empty
+        if audio_stream.getvalue():
+            return audio_stream
+        else:
+            st.write("[ERROR] No audio data was generated.")
+            return None
     except Exception as e:
         st.write(f"Error in TTS: {str(e)}")
         return None
