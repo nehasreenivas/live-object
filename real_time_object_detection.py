@@ -2,7 +2,7 @@ import streamlit as st
 import cv2
 import numpy as np
 from gtts import gTTS
-import os
+import io
 
 # Hardcode the paths to the prototxt file and model file
 prototxt_path = "MobileNetSSD_deploy.prototxt.txt"
@@ -19,11 +19,14 @@ COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 # Load our serialized model from disk
 net = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
 
-# Function for text-to-speech using gTTS
+# Function for text-to-speech using gTTS and returning as byte stream
 def speak(text):
     tts = gTTS(text=text, lang='en')
-    tts.save("output.mp3")
-    os.system("mpg321 output.mp3")  # Use an appropriate audio player command if you're on Streamlit Cloud
+    # Save the speech to a byte buffer
+    audio_stream = io.BytesIO()
+    tts.save(audio_stream)
+    audio_stream.seek(0)  # Rewind the stream to the beginning
+    return audio_stream
 
 # Initialize Streamlit app and camera
 st.title('Real-Time Object Detection with Sound')
@@ -98,9 +101,10 @@ if image_file is not None:
                 # Trigger text-to-speech for detected objects
                 if detected_objects:
                     detected_text = " and ".join(detected_objects) + " detected"
-                    speak(detected_text)
+                    audio_stream = speak(detected_text)
+                    st.audio(audio_stream, format="audio/mp3")
                 else:
-                    speak("No objects detected")
-
+                    audio_stream = speak("No objects detected")
+                    st.audio(audio_stream, format="audio/mp3")
 else:
     st.write("[ERROR] No image file received.")
