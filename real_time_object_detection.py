@@ -66,7 +66,8 @@ if image_file is not None:
 
             # Try to create a blob
             try:
-                blob = cv2.dnn.blobFromImage(frame_bgr, 0.007843, (400, 400), 127.5, 127.5, 127.5, 127.5, swapRB=True)
+                # Create blob with only 7 arguments (without swapRB)
+                blob = cv2.dnn.blobFromImage(frame_bgr, 0.007843, (400, 400), (127.5, 127.5, 127.5), swapRB=False)
             except cv2.error as e:
                 st.write(f"[ERROR] OpenCV DNN blob error: {str(e)}")
 
