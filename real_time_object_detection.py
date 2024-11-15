@@ -78,5 +78,5 @@ def run_object_detection(prototxt, model, confidence_threshold=0.5):
 
 if __name__ == "__main__":
     prototxt = "MobileNetSSD_deploy.prototxt.txt"  # Path to your Prototxt file
-    model = "uploaded_model.caffemodel"      # Path to your model file
+    model = "MobileNetSSD_deploy.caffemodel"      # Path to your model file
     run_object_detection(prototxt, model)
