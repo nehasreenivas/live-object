@@ -4,3 +4,4 @@ opencv-python-headless
 imutils
 numpy
 pandas
+pyttsx3
