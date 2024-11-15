@@ -41,43 +41,48 @@ if image_file is not None:
     # Decode the image to an OpenCV format
     frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
+    # Check if frame was successfully decoded
     if frame is None:
         st.write("[ERROR] Failed to decode the image")
     else:
         # Resize the frame (optional, depending on the size)
         frame = cv2.resize(frame, (400, 400))
 
-        # Run the object detection (MobileNetSSD)
-        blob = cv2.dnn.blobFromImage(frame, 0.007843, (400, 400), 127.5, 127.5, 127.5, 127.5)
-        net.setInput(blob)
-        detections = net.forward()
-
-        # Display results on Streamlit
-        detected_objects = []
-        for i in range(detections.shape[2]):
-            confidence = detections[0, 0, i, 2]
-            if confidence > confidence_threshold:
-                idx = int(detections[0, 0, i, 1])
-                box = detections[0, 0, i, 3:7] * np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]])
-                (startX, startY, endX, endY) = box.astype("int")
-                label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
-                color = COLORS[idx]
-                cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
-                cv2.putText(frame, label, (startX, startY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-                # Add detected object to the list
-                detected_objects.append(CLASSES[idx])
-
-        # Convert the frame to RGB and display it in Streamlit
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        st.image(frame_rgb, channels="RGB")
-
-        # Trigger text-to-speech for detected objects
-        if detected_objects:
-            detected_text = " and ".join(detected_objects) + " detected"
-            speak(detected_text)
+        # Check if the frame is valid for blob conversion
+        if frame.shape[0] == 0 or frame.shape[1] == 0:
+            st.write("[ERROR] Frame has invalid dimensions.")
         else:
-            speak("No objects detected")
+            # Run the object detection (MobileNetSSD)
+            blob = cv2.dnn.blobFromImage(frame, 0.007843, (400, 400), 127.5, 127.5, 127.5, 127.5)
+            net.setInput(blob)
+            detections = net.forward()
+
+            # Display results on Streamlit
+            detected_objects = []
+            for i in range(detections.shape[2]):
+                confidence = detections[0, 0, i, 2]
+                if confidence > confidence_threshold:
+                    idx = int(detections[0, 0, i, 1])
+                    box = detections[0, 0, i, 3:7] * np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]])
+                    (startX, startY, endX, endY) = box.astype("int")
+                    label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
+                    color = COLORS[idx]
+                    cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+                    cv2.putText(frame, label, (startX, startY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
+                    # Add detected object to the list
+                    detected_objects.append(CLASSES[idx])
+
+            # Convert the frame to RGB and display it in Streamlit
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            st.image(frame_rgb, channels="RGB")
+
+            # Trigger text-to-speech for detected objects
+            if detected_objects:
+                detected_text = " and ".join(detected_objects) + " detected"
+                speak(detected_text)
+            else:
+                speak("No objects detected")
 
 else:
     st.write("[ERROR] No image file received.")
