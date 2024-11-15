@@ -98,13 +98,16 @@ if image_file is not None:
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 st.image(frame_rgb, channels="RGB")
 
-                # Trigger text-to-speech for detected objects
+                # Check if any objects were detected
                 if detected_objects:
                     detected_text = " and ".join(detected_objects) + " detected"
-                    audio_stream = speak(detected_text)
-                    st.audio(audio_stream, format="audio/mp3")
+                    st.write(f"Detected Objects: {detected_text}")  # Display detected objects in text form
+                    audio_stream = speak(detected_text)  # Generate speech for detected objects
+                    st.audio(audio_stream, format="audio/mp3")  # Play the audio
                 else:
-                    audio_stream = speak("No objects detected")
-                    st.audio(audio_stream, format="audio/mp3")
+                    no_objects_text = "No objects detected"
+                    st.write(no_objects_text)  # Display message if no objects detected
+                    audio_stream = speak(no_objects_text)  # Generate speech for no detection
+                    st.audio(audio_stream, format="audio/mp3")  # Play the audio
 else:
     st.write("[ERROR] No image file received.")
