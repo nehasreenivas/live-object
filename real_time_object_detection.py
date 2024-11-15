@@ -23,7 +23,7 @@ net = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
 def speak(text):
     tts = gTTS(text=text, lang='en')
     tts.save("output.mp3")
-    os.system("mpg321 output.mp3")  # You can change this command depending on how to play audio on your cloud server
+    os.system("mpg321 output.mp3")  # Use an appropriate audio player command if you're on Streamlit Cloud
 
 # Initialize Streamlit app and camera
 st.title('Real-Time Object Detection with Sound')
