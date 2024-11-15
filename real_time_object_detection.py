@@ -10,7 +10,7 @@ import os
 
 # Hardcode the paths to the prototxt file and model file
 prototxt_path = "MobileNetSSD_deploy.prototxt.txt"
-model_path = "C:/Users/kotap_qdgh4x8/Downloads/Real-Time-Object-Detection-With-Sound-master/Real-Time-Object-Detection-With-Sound-master/MobileNetSSD_deploy.caffemodel"
+model_path = "MobileNetSSD_deploy.caffemodel"
 confidence_threshold = 0.2  # You can adjust this threshold as needed
 
 # Initialize the list of class labels MobileNet SSD was trained to detect
