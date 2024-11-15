@@ -128,15 +128,7 @@ if image_file is not None:
                 else:
                     st.write("[ERROR] Audio generation failed")
             else:
-                no_objects_text = "No objects detected"
-                st.write(no_objects_text)
-                
-                # Generate speech for no detection
-                audio_stream = speak(no_objects_text)
-                if audio_stream:
-                    play_audio(audio_stream)
-                else:
-                    st.write("[ERROR] Audio generation failed")
+                st.write("No objects detected")
         else:
             st.write("[ERROR] Frame has invalid number of channels.")
     else:
