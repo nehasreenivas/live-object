@@ -3,9 +3,6 @@ import cv2
 import numpy as np
 from gtts import gTTS
 import io
-import pygame
-import tempfile
-import os
 
 # Hardcode the paths to the prototxt file and model file
 prototxt_path = "MobileNetSSD_deploy.prototxt.txt"
@@ -37,28 +34,6 @@ def speak(text):
     except Exception as e:
         st.write(f"Error in TTS: {str(e)}")
         return None
-
-# Function to play audio from a BytesIO stream
-def play_audio(audio_stream):
-    if audio_stream:
-        # Initialize Pygame mixer
-        pygame.mixer.init()
-        
-        # Create a temporary file to store the audio
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_file:
-            # Write the audio data to the temporary file
-            temp_file.write(audio_stream.getvalue())
-        
-        # Load and play the audio
-        pygame.mixer.music.load(temp_file.name)
-        pygame.mixer.music.play()
-        
-        # Wait for the audio to finish playing
-        while pygame.mixer.music.get_busy():
-            continue
-        
-        # Clean up the temporary file
-        os.remove(temp_file.name)
 
 # Initialize Streamlit app and camera
 st.title('Real-Time Object Detection with Sound')
@@ -119,7 +94,7 @@ if image_file is not None:
                 # Generate speech for detected objects
                 audio_stream = speak(detected_text)
                 if audio_stream:
-                    play_audio(audio_stream)
+                    st.audio(audio_stream, format="audio/mp3")
                 else:
                     st.write("[ERROR] Audio generation failed")
             else:
@@ -129,5 +104,4 @@ if image_file is not None:
     else:
         st.write("[ERROR] Failed to decode the image")
 else:
-           
     st.write("[ERROR] No image file received.")
