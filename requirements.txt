@@ -6,3 +6,4 @@ numpy
 pandas
 pyttsx3
 espeakng
+gTTs
