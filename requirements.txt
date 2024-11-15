@@ -5,5 +5,5 @@ imutils
 numpy
 pandas
 pyttsx3
---upgrade pip
+upgrade pip
 eSpeak-ng
