@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from gtts import gTTS
 import io
+import time
 
 # Hardcode the paths to the prototxt file and model file
 prototxt_path = "MobileNetSSD_deploy.prototxt.txt"
@@ -122,5 +123,9 @@ if image_file is not None:
                         st.audio(audio_stream, format="audio/mp3")  # Play the audio
                     else:
                         st.write("[ERROR] Audio generation failed")
+                
+                # Re-run after 2 seconds to ensure repeated speech when detection occurs
+                time.sleep(2)
+
 else:
     st.write("[ERROR] No image file received.")
