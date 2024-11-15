@@ -5,5 +5,4 @@ imutils
 numpy
 pandas
 pyttsx3
-espeak-ng
 
