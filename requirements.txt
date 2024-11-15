@@ -5,6 +5,5 @@ imutils
 numpy
 pandas
 pyttsx3
-mpg123
 espeak-ng
 
