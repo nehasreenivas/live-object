@@ -1,11 +1,8 @@
 import streamlit as st
 import cv2
 import numpy as np
-from imutils.video import VideoStream
 from gtts import gTTS
 import os
-import imutils
-import time
 
 # Hardcode the paths to the prototxt file and model file
 prototxt_path = "MobileNetSSD_deploy.prototxt.txt"
@@ -31,64 +28,56 @@ def speak(text):
 # Initialize Streamlit app and camera
 st.title('Real-Time Object Detection with Sound')
 
-# Create a video stream object
-video_capture = st.camera_input("Capture Video")
+# Create a video capture object (this will capture an image from the webcam)
+image_file = st.camera_input("Capture Image")
 
-# Check if video input exists
-if video_capture:
-    # Decode the frame from bytes into an OpenCV image
-    np_frame = np.frombuffer(video_capture.read(), np.uint8)
-    frame = cv2.imdecode(np_frame, cv2.IMREAD_COLOR)
-    
-    # Check if frame was decoded successfully
+if image_file is not None:
+    # Read the image as bytes
+    img_bytes = image_file.getvalue()
+
+    # Convert the image bytes to a NumPy array
+    np_arr = np.frombuffer(img_bytes, np.uint8)
+
+    # Decode the image to an OpenCV format
+    frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
     if frame is None:
-        st.write("[ERROR] Failed to decode frame")
+        st.write("[ERROR] Failed to decode the image")
     else:
-        # Start the video stream
-        video_stream = VideoStream(src=0).start()
-        time.sleep(2.0)  # Allow the camera to warm up
+        # Resize the frame (optional, depending on the size)
+        frame = cv2.resize(frame, (400, 400))
 
-        # Loop over frames from the video stream
-        while True:
-            frame = video_stream.read()
+        # Run the object detection (MobileNetSSD)
+        blob = cv2.dnn.blobFromImage(frame, 0.007843, (400, 400), 127.5, 127.5, 127.5, 127.5)
+        net.setInput(blob)
+        detections = net.forward()
 
-            # Check if the frame is None
-            if frame is None:
-                st.write("[ERROR] Failed to capture frame")
-                break  # Exit if no frame is captured
+        # Display results on Streamlit
+        detected_objects = []
+        for i in range(detections.shape[2]):
+            confidence = detections[0, 0, i, 2]
+            if confidence > confidence_threshold:
+                idx = int(detections[0, 0, i, 1])
+                box = detections[0, 0, i, 3:7] * np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]])
+                (startX, startY, endX, endY) = box.astype("int")
+                label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
+                color = COLORS[idx]
+                cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+                cv2.putText(frame, label, (startX, startY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-            # Resize the frame to a max width of 400 pixels
-            frame = imutils.resize(frame, width=400)
+                # Add detected object to the list
+                detected_objects.append(CLASSES[idx])
 
-            # Grab the frame dimensions and convert it to a blob
-            (h, w) = frame.shape[:2]
-            blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
-                0.007843, (300, 300), 127.5)
+        # Convert the frame to RGB and display it in Streamlit
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        st.image(frame_rgb, channels="RGB")
 
-            # Pass the blob through the network and obtain the detections and predictions
-            net.setInput(blob)
-            detections = net.forward()
+        # Trigger text-to-speech for detected objects
+        if detected_objects:
+            detected_text = " and ".join(detected_objects) + " detected"
+            speak(detected_text)
+        else:
+            speak("No objects detected")
 
-            # Loop over the detections
-            for i in np.arange(0, detections.shape[2]):
-                # Extract the confidence (i.e., probability) associated with the prediction
-                confidence = detections[0, 0, i, 2]
-
-                # Filter out weak detections by ensuring the `confidence` is greater than the minimum confidence
-                if confidence > confidence_threshold:
-                    # Extract the index of the class label from the detections, then compute the (x, y)-coordinates of the bounding box for the object
-                    idx = int(detections[0, 0, i, 1])
-                    box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
-                    (startX, startY, endX, endY) = box.astype("int")
-
-                    # Draw the prediction on the frame
-                    label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
-                    cv2.rectangle(frame, (startX, startY), (endX, endY), COLORS[idx], 2)
-                    y = startY - 15 if startY - 15 > 15 else startY + 15
-                    cv2.putText(frame, label, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
-
-                    # Read aloud the detected object
-                    speak("This is a " + label)
-
-            # Show the output frame
-            st.image(frame, channels="BGR")
+else:
+    st.write("[ERROR] No image file received.")
