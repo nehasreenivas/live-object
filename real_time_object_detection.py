@@ -19,7 +19,7 @@ COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 # Load our serialized model from disk
 net = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
 
-# Function for text-to-speech using gTTS and returning as string
+# Function for text-to-speech using gTTS and returning as byte stream
 def speak(text):
     try:
         # Convert text to speech
@@ -30,15 +30,13 @@ def speak(text):
         tts.save(audio_stream)
         audio_stream.seek(0)  # Rewind the stream to the beginning
         
-        # Convert the BytesIO object to a string
-        audio_text = audio_stream.read().decode('utf-8')
-        return audio_text
+        return audio_stream
     except Exception as e:
         st.write(f"Error in TTS: {str(e)}")
         return None
 
 # Initialize Streamlit app and camera
-st.title('Real-Time Object Detection with Text-to-Speech')
+st.title('Real-Time Object Detection with Audio')
 
 # Create a video capture object (this will capture an image from the webcam)
 image_file = st.camera_input("Capture Image")
@@ -93,10 +91,10 @@ if image_file is not None:
                 detected_text = " and ".join(detected_objects) + " detected"
                 st.write(f"Detected Objects: {detected_text}")
                 
-                # Generate and display text-to-speech
-                audio_text = speak(detected_text)
-                if audio_text:
-                    st.write(f"Text-to-Speech: {audio_text}")
+                # Generate and play audio for detected objects
+                audio_stream = speak(detected_text)
+                if audio_stream:
+                    st.audio(audio_stream, format="audio/mp3")
                 else:
                     st.write("[ERROR] Audio generation failed")
             else:
