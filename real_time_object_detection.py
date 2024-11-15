@@ -1,111 +1,82 @@
-# Import the necessary packages
-from imutils.video import VideoStream
-from imutils.video import FPS
-import numpy as np
-import imutils
-import time
 import cv2
+import imutils
 import pyttsx3
-import streamlit as st
+import time
 
-# Streamlit UI setup
-st.title("Real-Time Object Detection")
-st.sidebar.header("Model Configuration")
+# Initialize text-to-speech engine
+def init_text_to_speech():
+    try:
+        engine = pyttsx3.init()
+        voices = engine.getProperty('voices')
+        engine.setProperty('voice', voices[0].id)  # Use the first voice (can be changed to another voice)
+        engine.setProperty('rate', 150)  # Set speech speed
+        return engine
+    except Exception as e:
+        print(f"Error initializing TTS: {e}")
+        return None
 
-# File uploader for prototxt and model files
-prototxt_file = st.sidebar.file_uploader("Upload Prototxt File", type=["txt", "prototxt"])
-model_file = st.sidebar.file_uploader("Upload Model File", type=["caffemodel"])
+# Function to start object detection
+def run_object_detection(prototxt, model, confidence_threshold=0.5):
+    # Initialize camera
+    camera = cv2.VideoCapture(0)  # Try changing to 1 or other index if 0 doesn't work
 
-confidence_threshold = st.sidebar.slider(
-    "Confidence Threshold", min_value=0.1, max_value=1.0, value=0.2, step=0.05
-)
+    if not camera.isOpened():
+        print("Error: Camera not accessible")
+        return
 
-# Classes MobileNetSSD was trained to detect
-CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
-           "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
-           "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
-           "sofa", "train", "tvmonitor"]
-COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
+    # Load model
+    net = cv2.dnn.readNetFromCaffe(prototxt, model)
 
-# Function to load the model and run object detection
-def run_object_detection(prototxt_path, model_path, confidence):
-    st.write("[INFO] Loading model...")
-    net = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
-
-    st.write("[INFO] Starting video stream...")
-    vs = VideoStream(src=0).start()
-    time.sleep(2.0)
-    fps = FPS().start()
-
-    # Text-to-speech engine setup
-    engine = pyttsx3.init()
-
-    # Loop over frames from the video stream
+    # Initialize text-to-speech engine
+    engine = init_text_to_speech()
+    
+    # Start processing frames
     while True:
-        # Grab the frame and resize it
-        frame = vs.read()
+        ret, frame = camera.read()
+        if not ret:
+            print("Error: Failed to capture frame")
+            break
+        
+        # Resize the frame to a fixed width
         frame = imutils.resize(frame, width=400)
 
-        # Grab frame dimensions and convert it to a blob
-        (h, w) = frame.shape[:2]
-        blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
-                                     0.007843, (300, 300), 127.5)
-
-        # Pass the blob through the network to get detections
+        # Prepare the frame for object detection
+        blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300), (104, 177, 123), False, crop=False)
         net.setInput(blob)
         detections = net.forward()
 
-        # Loop over the detections
-        for i in np.arange(0, detections.shape[2]):
-            confidence_score = detections[0, 0, i, 2]
-
-            # Filter out weak detections
-            if confidence_score > confidence:
-                idx = int(detections[0, 0, i, 1])
-                box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+        # Process detections
+        for i in range(detections.shape[2]):
+            confidence = detections[0, 0, i, 2]
+            if confidence > confidence_threshold:
+                idx = int(detections[0, 0, i, 1])  # Get the index of the detected object
+                box = detections[0, 0, i, 3:7] * \
+                    np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]])
                 (startX, startY, endX, endY) = box.astype("int")
 
-                # Draw the bounding box and label
-                label = "{}: {:.2f}%".format(CLASSES[idx], confidence_score * 100)
-                cv2.rectangle(frame, (startX, startY), (endX, endY), COLORS[idx], 2)
-                y = startY - 15 if startY - 15 > 15 else startY + 15
-                cv2.putText(frame, label, (startX, y),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
+                # Draw bounding box and label on the frame
+                label = f"Confidence: {confidence:.2f}"
+                cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 255, 0), 2)
+                cv2.putText(frame, label, (startX, startY - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-                # Text-to-speech
-                engine.say(f"This is a {CLASSES[idx]}")
-                engine.runAndWait()
+                # Optionally use TTS to announce detected objects
+                if engine:
+                    engine.say(f"Object detected with confidence: {confidence:.2f}")
+                    engine.runAndWait()
 
-        # Show the output frame
-        cv2.imshow("Frame", frame)
-        key = cv2.waitKey(1) & 0xFF
+        # Display the frame with detected objects
+        cv2.imshow("Object Detection", frame)
 
-        # If the `q` key was pressed, break from the loop
-        if key == ord("q"):
+        # Break the loop if 'q' is pressed
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-        # Update the FPS counter
-        fps.update()
-
-    # Stop the timer and display FPS information
-    fps.stop()
-    st.write("[INFO] Elapsed time: {:.2f}".format(fps.elapsed()))
-    st.write("[INFO] Approx. FPS: {:.2f}".format(fps.fps()))
-
-    # Clean up
+    # Release the camera and close any OpenCV windows
+    camera.release()
     cv2.destroyAllWindows()
-    vs.stop()
 
-# Streamlit logic for handling file uploads
-if prototxt_file and model_file:
-    # Save the uploaded files to disk
-    with open("uploaded_prototxt.prototxt", "wb") as f:
-        f.write(prototxt_file.read())
-    with open("uploaded_model.caffemodel", "wb") as f:
-        f.write(model_file.read())
-
-    # Run the object detection
-    st.success("Model files uploaded successfully. Starting object detection...")
-    run_object_detection("uploaded_prototxt.prototxt", "uploaded_model.caffemodel", confidence_threshold)
-else:
-    st.warning("Please upload both the Prototxt and Model files to proceed.")
+if __name__ == "__main__":
+    prototxt = "uploaded_prototxt.prototxt"  # Path to your Prototxt file
+    model = "uploaded_model.caffemodel"      # Path to your model file
+    run_object_detection(prototxt, model)
