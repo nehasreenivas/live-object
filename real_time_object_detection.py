@@ -63,7 +63,7 @@ if image_file is not None:
 
             # Run the object detection (MobileNetSSD)
             try:
-                blob = cv2.dnn.blobFromImage(frame_bgr, 0.007843, (400, 400), 127.5, 127.5, 127.5, 127.5)
+                blob = cv2.dnn.blobFromImage(frame_bgr, 0.007843, (400, 400), 127.5, 127.5, 127.5, 127.5, swapRB=True)
             except cv2.error as e:
                 st.write(f"[ERROR] OpenCV DNN blob error: {str(e)}")
 
