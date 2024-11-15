@@ -30,16 +30,25 @@ def speak(text):
 
 # Initialize Streamlit app and camera
 st.title('Real-Time Object Detection with Sound')
+
+# Create a video stream object
 video_capture = st.camera_input("Capture Video")
 
+# Check if video input exists
 if video_capture:
+    # Start the video stream
+    video_stream = VideoStream(src=0).start()
+    time.sleep(2.0)  # Allow the camera to warm up
+
     # Loop over frames from the video stream
     while True:
-        frame = video_capture.read()
+        frame = video_stream.read()
+
+        # Check if the frame is None
         if frame is None:
             st.write("[ERROR] Failed to capture frame")
             break  # Exit if no frame is captured
-        
+
         # Resize the frame to a max width of 400 pixels
         frame = imutils.resize(frame, width=400)
 
