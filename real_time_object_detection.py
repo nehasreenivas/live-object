@@ -23,7 +23,10 @@ net = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
 # Function for text-to-speech using gTTS and returning as byte stream
 def speak(text):
     try:
+        # Convert text to speech
         tts = gTTS(text=text, lang='en')
+        
+        # Save it to a BytesIO object
         audio_stream = io.BytesIO()
         tts.save(audio_stream)
         audio_stream.seek(0)  # Rewind the stream to the beginning
