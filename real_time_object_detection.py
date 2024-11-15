@@ -21,12 +21,15 @@ net = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
 
 # Function for text-to-speech using gTTS and returning as byte stream
 def speak(text):
-    tts = gTTS(text=text, lang='en')
-    # Save the speech to a byte buffer
-    audio_stream = io.BytesIO()
-    tts.save(audio_stream)
-    audio_stream.seek(0)  # Rewind the stream to the beginning
-    return audio_stream
+    try:
+        tts = gTTS(text=text, lang='en')
+        audio_stream = io.BytesIO()
+        tts.save(audio_stream)
+        audio_stream.seek(0)  # Rewind the stream to the beginning
+        return audio_stream
+    except Exception as e:
+        st.write(f"Error in TTS: {str(e)}")
+        return None
 
 # Initialize Streamlit app and camera
 st.title('Real-Time Object Detection with Sound')
@@ -102,12 +105,22 @@ if image_file is not None:
                 if detected_objects:
                     detected_text = " and ".join(detected_objects) + " detected"
                     st.write(f"Detected Objects: {detected_text}")  # Display detected objects in text form
-                    audio_stream = speak(detected_text)  # Generate speech for detected objects
-                    st.audio(audio_stream, format="audio/mp3")  # Play the audio
+                    
+                    # Generate speech for detected objects
+                    audio_stream = speak(detected_text)  
+                    if audio_stream:
+                        st.audio(audio_stream, format="audio/mp3")  # Play the audio
+                    else:
+                        st.write("[ERROR] Audio generation failed")
                 else:
                     no_objects_text = "No objects detected"
                     st.write(no_objects_text)  # Display message if no objects detected
-                    audio_stream = speak(no_objects_text)  # Generate speech for no detection
-                    st.audio(audio_stream, format="audio/mp3")  # Play the audio
+                    
+                    # Generate speech for no detection
+                    audio_stream = speak(no_objects_text)  
+                    if audio_stream:
+                        st.audio(audio_stream, format="audio/mp3")  # Play the audio
+                    else:
+                        st.write("[ERROR] Audio generation failed")
 else:
     st.write("[ERROR] No image file received.")
