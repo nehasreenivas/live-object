@@ -39,8 +39,13 @@ def speak(text):
 
 # Loop over the frames from the video stream
 while True:
-    # Grab the frame from the threaded video stream and resize it to a max width of 400 pixels
+    # Grab the frame from the threaded video stream
     frame = vs.read()
+    if frame is None:
+        print("[ERROR] Failed to capture frame")
+        break  # Exit if no frame is captured
+
+    # Resize the frame to a max width of 400 pixels
     frame = imutils.resize(frame, width=400)
 
     # Grab the frame dimensions and convert it to a blob
