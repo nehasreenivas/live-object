@@ -1,12 +1,13 @@
-# Import the necessary packages
-from imutils.video import VideoStream
-from imutils.video import FPS
 import numpy as np
 import imutils
 import time
 import cv2
 import pyttsx3
 import streamlit as st
+from imutils.video import VideoStream
+from imutils.video import FPS
+from gtts import gTTS
+import os
 
 # Streamlit UI setup
 st.title("Real-Time Object Detection")
@@ -25,20 +26,18 @@ CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
            "bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
            "dog", "horse", "motorbike", "person", "pottedplant", "sheep",
            "sofa", "train", "tvmonitor"]
+
 COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
 # Function to load the model and run object detection
 def run_object_detection(prototxt_path, model_path, confidence):
     st.write("[INFO] Loading model...")
     net = cv2.dnn.readNetFromCaffe(prototxt_path, model_path)
-
+    
     st.write("[INFO] Starting video stream...")
     vs = VideoStream(src=0).start()
     time.sleep(2.0)
     fps = FPS().start()
-
-    # Text-to-speech engine setup
-    engine = pyttsx3.init()
 
     # Loop over frames from the video stream
     while True:
@@ -73,16 +72,18 @@ def run_object_detection(prototxt_path, model_path, confidence):
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, COLORS[idx], 2)
 
                 # Text-to-speech
+                engine = pyttsx3.init()  # Initialize pyttsx3 engine (you can replace with gTTS)
                 engine.say(f"This is a {CLASSES[idx]}")
                 engine.runAndWait()
 
-        # Show the output frame
-        cv2.imshow("Frame", frame)
-        key = cv2.waitKey(1) & 0xFF
+                # Alternatively, you can use gTTS for cloud-based environments
+                # text = f"This is a {CLASSES[idx]}"
+                # tts = gTTS(text=text, lang='en')
+                # tts.save("speech.mp3")
+                # os.system("mpg321 speech.mp3")
 
-        # If the `q` key was pressed, break from the loop
-        if key == ord("q"):
-            break
+        # Show the output frame in Streamlit
+        st.image(frame, channels="BGR", use_column_width=True)
 
         # Update the FPS counter
         fps.update()
