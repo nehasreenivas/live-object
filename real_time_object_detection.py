@@ -77,6 +77,6 @@ def run_object_detection(prototxt, model, confidence_threshold=0.5):
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    prototxt = "uploaded_prototxt.prototxt"  # Path to your Prototxt file
+    prototxt = "MobileNetSSD_deploy.prototxt.txt"  # Path to your Prototxt file
     model = "uploaded_model.caffemodel"      # Path to your model file
     run_object_detection(prototxt, model)
