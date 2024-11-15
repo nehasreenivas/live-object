@@ -6,4 +6,5 @@ numpy
 pandas
 pyttsx3
 espeakng
+pygame
 gTTs
