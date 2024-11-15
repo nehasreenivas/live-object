@@ -61,41 +61,45 @@ if image_file is not None:
             # Ensure the frame is in the correct color format (BGR)
             frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-            # Run the object detection (MobileNetSSD)
+            # Initialize blob
+            blob = None
+
+            # Try to create a blob
             try:
                 blob = cv2.dnn.blobFromImage(frame_bgr, 0.007843, (400, 400), 127.5, 127.5, 127.5, 127.5, swapRB=True)
             except cv2.error as e:
                 st.write(f"[ERROR] OpenCV DNN blob error: {str(e)}")
 
-            net.setInput(blob)
-            detections = net.forward()
+            if blob is not None:
+                net.setInput(blob)
+                detections = net.forward()
 
-            # Display results on Streamlit
-            detected_objects = []
-            for i in range(detections.shape[2]):
-                confidence = detections[0, 0, i, 2]
-                if confidence > confidence_threshold:
-                    idx = int(detections[0, 0, i, 1])
-                    box = detections[0, 0, i, 3:7] * np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]])
-                    (startX, startY, endX, endY) = box.astype("int")
-                    label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
-                    color = COLORS[idx]
-                    cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
-                    cv2.putText(frame, label, (startX, startY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                # Display results on Streamlit
+                detected_objects = []
+                for i in range(detections.shape[2]):
+                    confidence = detections[0, 0, i, 2]
+                    if confidence > confidence_threshold:
+                        idx = int(detections[0, 0, i, 1])
+                        box = detections[0, 0, i, 3:7] * np.array([frame.shape[1], frame.shape[0], frame.shape[1], frame.shape[0]])
+                        (startX, startY, endX, endY) = box.astype("int")
+                        label = "{}: {:.2f}%".format(CLASSES[idx], confidence * 100)
+                        color = COLORS[idx]
+                        cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
+                        cv2.putText(frame, label, (startX, startY - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-                    # Add detected object to the list
-                    detected_objects.append(CLASSES[idx])
+                        # Add detected object to the list
+                        detected_objects.append(CLASSES[idx])
 
-            # Convert the frame to RGB and display it in Streamlit
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            st.image(frame_rgb, channels="RGB")
+                # Convert the frame to RGB and display it in Streamlit
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                st.image(frame_rgb, channels="RGB")
 
-            # Trigger text-to-speech for detected objects
-            if detected_objects:
-                detected_text = " and ".join(detected_objects) + " detected"
-                speak(detected_text)
-            else:
-                speak("No objects detected")
+                # Trigger text-to-speech for detected objects
+                if detected_objects:
+                    detected_text = " and ".join(detected_objects) + " detected"
+                    speak(detected_text)
+                else:
+                    speak("No objects detected")
 
 else:
     st.write("[ERROR] No image file received.")
