@@ -33,12 +33,7 @@ def speak(text):
         tts.save(audio_stream)
         audio_stream.seek(0)  # Rewind the stream to the beginning
         
-        # Ensure that audio_stream is not empty
-        if audio_stream.getvalue():
-            return audio_stream
-        else:
-            st.write("[ERROR] No audio data was generated.")
-            return None
+        return audio_stream
     except Exception as e:
         st.write(f"Error in TTS: {str(e)}")
         return None
@@ -134,4 +129,5 @@ if image_file is not None:
     else:
         st.write("[ERROR] Failed to decode the image")
 else:
+           
     st.write("[ERROR] No image file received.")
